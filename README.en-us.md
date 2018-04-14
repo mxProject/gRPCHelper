@@ -50,6 +50,14 @@ This library provides notification of exception information on RPC method call.
 
 This library provides generic shortcut methods for stream processing.
 
+### Heartbeat ###
+
+This library provides features to implement simple heartbeat.
+
+### Http Gateway ###
+
+This library provides an HTTP gateway middleware for ASP.NET Core.
+
 # Requirement #
 
 * .NET Framework 4.6 or .NET Standard 2.0
@@ -64,6 +72,8 @@ This library provides generic shortcut methods for stream processing.
 * [Performance and exception notification](/document/notification.en-us.md)
 * [Logging](/document/logging.en-us.md)
 * [Extension method](/document/extensions.en-us.md)
+* [Heartbeat](/document/heartbeat.en-us.md)
+* [Http Gateway](/document/gateway.en-us.md)
 
 # Licence #
 

@@ -45,6 +45,17 @@ namespace mxProject.Helpers.Grpc.Clients
         }
 
         /// <summary>
+        /// 指定されたレスポンスを格納したインスタンスを生成します。
+        /// </summary>
+        /// <typeparam name="TResponse">レスポンスの型</typeparam>
+        /// <param name="response">レスポンス</param>
+        /// <returns></returns>
+        public static GrpcResult<TResponse> Create<TResponse>(TResponse response)
+        {
+            return new GrpcResult<TResponse>(response);
+        }
+
+        /// <summary>
         /// 指定された例外を格納したインスタンスを生成します。
         /// </summary>
         /// <typeparam name="TResponse">レスポンスの型</typeparam>

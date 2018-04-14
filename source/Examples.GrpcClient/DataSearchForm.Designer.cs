@@ -40,17 +40,22 @@
             this.rdoMethodServerStream = new System.Windows.Forms.RadioButton();
             this.rdoMethodClientStream = new System.Windows.Forms.RadioButton();
             this.panel2 = new System.Windows.Forms.Panel();
-            this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.txtLog = new System.Windows.Forms.RichTextBox();
+            this.menuStrip1 = new System.Windows.Forms.MenuStrip();
+            this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuHeartbeat = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuHttpGateway = new System.Windows.Forms.ToolStripMenuItem();
             this.panel1.SuspendLayout();
             this.grpMethods.SuspendLayout();
             this.panel2.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
+            this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // panel1
@@ -61,7 +66,7 @@
             this.panel1.Controls.Add(this.btnExecute);
             this.panel1.Controls.Add(this.grpMethods);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
-            this.panel1.Location = new System.Drawing.Point(0, 0);
+            this.panel1.Location = new System.Drawing.Point(0, 24);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(488, 153);
             this.panel1.TabIndex = 0;
@@ -175,20 +180,10 @@
             // 
             this.panel2.Controls.Add(this.splitContainer1);
             this.panel2.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panel2.Location = new System.Drawing.Point(0, 153);
+            this.panel2.Location = new System.Drawing.Point(0, 177);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(488, 373);
+            this.panel2.Size = new System.Drawing.Size(488, 349);
             this.panel2.TabIndex = 1;
-            // 
-            // dataGridView1
-            // 
-            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.dataGridView1.Location = new System.Drawing.Point(4, 4);
-            this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.RowTemplate.Height = 21;
-            this.dataGridView1.Size = new System.Drawing.Size(480, 266);
-            this.dataGridView1.TabIndex = 0;
             // 
             // splitContainer1
             // 
@@ -206,9 +201,19 @@
             // 
             this.splitContainer1.Panel2.Controls.Add(this.txtLog);
             this.splitContainer1.Panel2.Padding = new System.Windows.Forms.Padding(4);
-            this.splitContainer1.Size = new System.Drawing.Size(488, 373);
-            this.splitContainer1.SplitterDistance = 274;
+            this.splitContainer1.Size = new System.Drawing.Size(488, 349);
+            this.splitContainer1.SplitterDistance = 256;
             this.splitContainer1.TabIndex = 1;
+            // 
+            // dataGridView1
+            // 
+            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridView1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dataGridView1.Location = new System.Drawing.Point(4, 4);
+            this.dataGridView1.Name = "dataGridView1";
+            this.dataGridView1.RowTemplate.Height = 21;
+            this.dataGridView1.Size = new System.Drawing.Size(480, 248);
+            this.dataGridView1.TabIndex = 0;
             // 
             // txtLog
             // 
@@ -216,9 +221,40 @@
             this.txtLog.Location = new System.Drawing.Point(4, 4);
             this.txtLog.Name = "txtLog";
             this.txtLog.ReadOnly = true;
-            this.txtLog.Size = new System.Drawing.Size(480, 87);
+            this.txtLog.Size = new System.Drawing.Size(480, 81);
             this.txtLog.TabIndex = 0;
             this.txtLog.Text = "";
+            // 
+            // menuStrip1
+            // 
+            this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.optionsToolStripMenuItem});
+            this.menuStrip1.Location = new System.Drawing.Point(0, 0);
+            this.menuStrip1.Name = "menuStrip1";
+            this.menuStrip1.Size = new System.Drawing.Size(488, 24);
+            this.menuStrip1.TabIndex = 2;
+            this.menuStrip1.Text = "menuStrip1";
+            // 
+            // optionsToolStripMenuItem
+            // 
+            this.optionsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.mnuHeartbeat,
+            this.mnuHttpGateway});
+            this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
+            this.optionsToolStripMenuItem.Size = new System.Drawing.Size(59, 20);
+            this.optionsToolStripMenuItem.Text = "options";
+            // 
+            // mnuHeartbeat
+            // 
+            this.mnuHeartbeat.Name = "mnuHeartbeat";
+            this.mnuHeartbeat.Size = new System.Drawing.Size(167, 22);
+            this.mnuHeartbeat.Text = "Heartbeat";
+            // 
+            // mnuHttpGateway
+            // 
+            this.mnuHttpGateway.Name = "mnuHttpGateway";
+            this.mnuHttpGateway.Size = new System.Drawing.Size(167, 22);
+            this.mnuHttpGateway.Text = "use Http Gateway";
             // 
             // DataSearchForm
             // 
@@ -227,6 +263,8 @@
             this.ClientSize = new System.Drawing.Size(488, 526);
             this.Controls.Add(this.panel2);
             this.Controls.Add(this.panel1);
+            this.Controls.Add(this.menuStrip1);
+            this.MainMenuStrip = this.menuStrip1;
             this.Name = "DataSearchForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "gRPC Example";
@@ -235,12 +273,15 @@
             this.grpMethods.ResumeLayout(false);
             this.grpMethods.PerformLayout();
             this.panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
+            this.menuStrip1.ResumeLayout(false);
+            this.menuStrip1.PerformLayout();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -261,6 +302,10 @@
         private System.Windows.Forms.Button btnCancel;
         private System.Windows.Forms.SplitContainer splitContainer1;
         private System.Windows.Forms.RichTextBox txtLog;
+        private System.Windows.Forms.MenuStrip menuStrip1;
+        private System.Windows.Forms.ToolStripMenuItem optionsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem mnuHeartbeat;
+        private System.Windows.Forms.ToolStripMenuItem mnuHttpGateway;
     }
 }
 

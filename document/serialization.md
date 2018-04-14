@@ -56,7 +56,7 @@ var marshallerFactory = new GrpcMarshallerFactory(new MessagePackSerializerFacto
 ```
 
 
-## **Server Side Implementation** - サーバー側の実装 ##
+## サーバー側の実装 ##
 
 
 ```csharp
@@ -75,7 +75,7 @@ server.Services.Add(builder.BuildService(typeof(PersonSearchService), new Person
 ```
 
 
-## **Client Side Implementation** - クライアント側の実装 ##
+## クライアント側の実装 ##
 
 
 ```csharp

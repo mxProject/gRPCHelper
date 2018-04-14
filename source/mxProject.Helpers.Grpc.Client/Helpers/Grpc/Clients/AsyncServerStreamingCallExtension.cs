@@ -49,6 +49,38 @@ namespace mxProject.Helpers.Grpc.Clients
 
         }
 
+        /// <summary>
+        /// 全てのレスポンスを受信します。
+        /// </summary>
+        /// <typeparam name="TResponse">レスポンスの型</typeparam>
+        /// <typeparam name="TResult">実行結果の型</typeparam>
+        /// <param name="call">呼び出しオブジェクト</param>
+        /// <param name="converter">実行結果への変換処理</param>
+        /// <returns>実行結果</returns>
+        public static async Task<GrpcResult<IList<TResult>>> ReadAllAsync<TResponse, TResult>(this AsyncServerStreamingCall<TResponse> call, Converter<TResponse, TResult> converter)
+            where TResponse : class
+        {
+
+            try
+            {
+
+                List<TResult> list = new List<TResult>();
+
+                while (await call.ResponseStream.MoveNext().ConfigureAwait(false))
+                {
+                    list.Add(converter(call.ResponseStream.Current));
+                }
+
+                return GrpcResult.Create<IList<TResult>>(list, call.ToInterface());
+
+            }
+            catch (Exception ex) when (GrpcExceptionUtility.HasRpcException(ex))
+            {
+                return HandleResponseListException<TResponse, TResult>(call, ex);
+            }
+
+        }
+
         #endregion
 
         #region レスポンスに対して処理を実行
@@ -165,6 +197,30 @@ namespace mxProject.Helpers.Grpc.Clients
         /// 指定された例外を処理し、実行結果を返します。
         /// </summary>
         /// <typeparam name="TResponse">レスポンスの型</typeparam>
+        /// <typeparam name="TResult">実行結果の型</typeparam>
+        /// <param name="call">呼び出しオブジェクト</param>
+        /// <param name="ex">例外</param>
+        /// <returns>実行結果</returns>
+        private static GrpcResult<TResult> HandleResponseException<TResponse, TResult>(AsyncServerStreamingCall<TResponse> call, Exception ex)
+        {
+
+            Exception actual = GrpcExceptionUtility.GetActualException(ex);
+
+            GrpcCallState state;
+
+            if (GrpcCallInvokerContext.TryGetState(call, out state))
+            {
+                GrpcExceptionListener.NotifyCatchClientException(state.Method, state.Host, state.Options, actual);
+            }
+
+            return GrpcResult.Create<TResult>(actual);
+
+        }
+
+        /// <summary>
+        /// 指定された例外を処理し、実行結果を返します。
+        /// </summary>
+        /// <typeparam name="TResponse">レスポンスの型</typeparam>
         /// <param name="call">呼び出しオブジェクト</param>
         /// <param name="ex">例外</param>
         /// <returns>実行結果</returns>
@@ -184,7 +240,32 @@ namespace mxProject.Helpers.Grpc.Clients
 
         }
 
+        /// <summary>
+        /// 指定された例外を処理し、実行結果を返します。
+        /// </summary>
+        /// <typeparam name="TResponse">レスポンスの型</typeparam>
+        /// <typeparam name="TResult">実行結果の型</typeparam>
+        /// <param name="call">呼び出しオブジェクト</param>
+        /// <param name="ex">例外</param>
+        /// <returns>実行結果</returns>
+        private static GrpcResult<IList<TResult>> HandleResponseListException<TResponse, TResult>(AsyncServerStreamingCall<TResponse> call, Exception ex)
+        {
+
+            Exception actual = GrpcExceptionUtility.GetActualException(ex);
+
+            GrpcCallState state;
+
+            if (GrpcCallInvokerContext.TryGetState(call, out state))
+            {
+                GrpcExceptionListener.NotifyCatchClientException(state.Method, state.Host, state.Options, actual);
+            }
+
+            return GrpcResult.Create<IList<TResult>>(actual);
+
+        }
+
         #endregion
+
         #region 汎用処理
 
         /// <summary>
