@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net46</TargetFrameworks>
+    <RootNamespace>mxProject</RootNamespace>
+    <Authors>mxProject</Authors>
+    <Company />
+    <Version>0.5.0</Version>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netcoreapp2.0|AnyCPU'">
+    <DocumentationFile>bin\Debug\netcoreapp2.0\mxProject.Helpers.Grpc.Server.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.0|AnyCPU'">
+    <DocumentationFile>bin\Debug\mxProject.Helpers.Grpc.Server.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.0|AnyCPU'">
+    <DocumentationFile>bin\Release\mxProject.Helpers.Grpc.Server.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Helpers\Grpc\Servers\ServerMathodInterceptors\**" />
+    <EmbeddedResource Remove="Helpers\Grpc\Servers\ServerMathodInterceptors\**" />
+    <None Remove="Helpers\Grpc\Servers\ServerMathodInterceptors\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grpc" Version="1.9.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\mxProject.Helpers.Grpc.Common\mxProject.Helpers.Grpc.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+
+</Project>
