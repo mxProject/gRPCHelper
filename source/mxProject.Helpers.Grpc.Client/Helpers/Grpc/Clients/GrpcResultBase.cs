@@ -36,11 +36,23 @@ namespace mxProject.Helpers.Grpc.Clients
             m_Exception = exception;
         }
 
+        /// <summary>
+        /// コピーコンストラクタ
+        /// </summary>
+        internal GrpcResultBase(GrpcResultBase source) 
+        {
+            m_Call = source.m_Call;
+            m_Status = source.m_Status;
+            m_Trailers = source.m_Trailers;
+            m_Exception = source.m_Exception;
+        }
+
         #endregion
 
         private IGrpcAsyncCall m_Call;
         private Status? m_Status;
         private Metadata m_Trailers;
+        private Exception m_Exception;
 
         #region ステータス
 
@@ -52,6 +64,7 @@ namespace mxProject.Helpers.Grpc.Clients
             get
             {
                 if (m_Status.HasValue) { return true; }
+                if (m_Call == null) { return true; }
                 return m_Call.IsRequestStreamCompleted && m_Call.IsEndResponse;
             }
         }
@@ -64,6 +77,8 @@ namespace mxProject.Helpers.Grpc.Clients
         {
 
             if (m_Status.HasValue) { return m_Status.Value; }
+
+            if (m_Call== null) { return Status.DefaultSuccess; }
 
             m_Status = m_Call.GetStatus();
             return m_Status.Value;
@@ -245,6 +260,7 @@ namespace mxProject.Helpers.Grpc.Clients
             get
             {
                 if (m_Trailers != null) { return true; }
+                if (m_Call == null) { return false; }
                 return m_Call.IsRequestStreamCompleted && m_Call.IsEndResponse;
             }
         }
@@ -260,6 +276,8 @@ namespace mxProject.Helpers.Grpc.Clients
                 if (m_Trailers != null) { return m_Trailers; }
 
                 if (!CanGetTrailers) { return null; }
+
+                if (m_Call == null) { return null; }
 
                 var obj = m_Call.ResponseHeadersAsync.Result;
 
@@ -281,7 +299,6 @@ namespace mxProject.Helpers.Grpc.Clients
         {
             get { return m_Exception; }
         }
-        private Exception m_Exception;
 
         #endregion
 

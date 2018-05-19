@@ -28,6 +28,19 @@ namespace mxProject.Helpers.Grpc.Servers
         /// <returns></returns>
         public ServerServiceDefinition BuildService(Type serviceType, object serviceInstance, GrpcServiceBuilderSettings settings)
         {
+            return BuildService(null, serviceType, serviceInstance, settings);
+        }
+
+        /// <summary>
+        /// 指定された型に対するサービス定義を生成します。
+        /// </summary>
+        /// <param name="serviceName">サービス名</param>
+        /// <param name="serviceType">サービスの型</param>
+        /// <param name="serviceInstance">サービスインスタンス</param>
+        /// <param name="settings">動作設定</param>
+        /// <returns></returns>
+        public ServerServiceDefinition BuildService(string serviceName, Type serviceType, object serviceInstance, GrpcServiceBuilderSettings settings)
+        {
 
             settings = settings ?? new GrpcServiceBuilderSettings();
 
@@ -38,33 +51,19 @@ namespace mxProject.Helpers.Grpc.Servers
             IList<IGrpcServerMethodInvokingInterceptor> classInvokingInterceptors = GetInvokingInterceptors(implType);
             IList<IGrpcServerMethodInvokedInterceptor> classInvokedInterceptors = GetInvokedInterceptors(implType);
 
-            IDictionary<string, IList<MethodInfo>> methodImpls = GetMethodHandlers(implType);
-
-            foreach (string name in methodImpls.Keys)
+            foreach (GrpcMethodHandlerInfo method in GrpcReflection.EnumerateServiceMethods(implType))
             {
-                foreach (MethodInfo methodImpl in methodImpls[name])
-                {
 
-                    MethodType methodType;
-                    Type requestType;
-                    Type responseType;
+                IList<IGrpcServerMethodInvokingInterceptor> methodInvokingInterceptors = GetInvokingInterceptors(method.Handler);
+                IList<IGrpcServerMethodInvokedInterceptor> methodInvokedInterceptors = GetInvokedInterceptors(method.Handler);
 
-                    if (!TryGetServiceMathodInfo(methodImpl, out methodType, out requestType, out responseType)) { continue; }
+                MethodBuildContext context = new MethodBuildContext(serviceName, serviceType, serviceInstance, method.MethodType, method.RequestType, method.ResponseType, method.Handler, settings
+                    , Sort<IGrpcServerMethodInvokingInterceptor>(CompareInterceptor, new IEnumerable<IGrpcServerMethodInvokingInterceptor>[] { settings.InvokingInterceptors, classInvokingInterceptors, methodInvokingInterceptors })
+                    , Sort<IGrpcServerMethodInvokedInterceptor>(CompareInterceptor, new IEnumerable<IGrpcServerMethodInvokedInterceptor>[] { settings.InvokedInterceptors, classInvokedInterceptors, methodInvokedInterceptors })
+                    , Sort<IGrpcServerMethodExceptionHandler>(CompareInterceptor, new IEnumerable<IGrpcServerMethodExceptionHandler>[] { settings.ExceptionHandlers })
+                    );
 
-                    IList<IGrpcServerMethodInvokingInterceptor> methodInvokingInterceptors = GetInvokingInterceptors(methodImpl);
-                    IList<IGrpcServerMethodInvokedInterceptor> methodInvokedInterceptors = GetInvokedInterceptors(methodImpl);
-
-                    MethodBuildContext context = new MethodBuildContext(serviceType, serviceInstance, methodType, requestType, responseType, methodImpl, settings
-                        , Sort<IGrpcServerMethodInvokingInterceptor>(CompareInterceptor, new IEnumerable<IGrpcServerMethodInvokingInterceptor>[] { settings.InvokingInterceptors, classInvokingInterceptors, methodInvokingInterceptors })
-                        , Sort<IGrpcServerMethodInvokedInterceptor>(CompareInterceptor, new IEnumerable<IGrpcServerMethodInvokedInterceptor>[] { settings.InvokedInterceptors, classInvokedInterceptors, methodInvokedInterceptors })
-                        , Sort<IGrpcServerMethodExceptionHandler>(CompareInterceptor, new IEnumerable<IGrpcServerMethodExceptionHandler>[] { settings.ExceptionHandlers })
-                        );
-
-                    AddServiceMethod(builder, context);
-
-                    break;
-
-                }
+                AddServiceMethod(builder, context);
 
             }
 
@@ -81,6 +80,7 @@ namespace mxProject.Helpers.Grpc.Servers
             /// <summary>
             /// 
             /// </summary>
+            /// <param name="serviceName">サービス名</param>
             /// <param name="serviceType">サービスの型</param>
             /// <param name="serviceInstance">サービスインスタンス</param>
             /// <param name="methodType">サービスメソッドの種類</param>
@@ -91,9 +91,10 @@ namespace mxProject.Helpers.Grpc.Servers
             /// <param name="invokingInterceptors">メソッド呼び出し前の割込処理</param>
             /// <param name="invokedInterceptors">メソッド呼び出し後の割込処理</param>
             /// <param name="exceptionHandlers">例外ハンドラ</param>
-            internal MethodBuildContext(Type serviceType, object serviceInstance, MethodType methodType, Type requestType, Type responseType, MethodInfo methodImpl, GrpcServiceBuilderSettings settings
+            internal MethodBuildContext(string serviceName, Type serviceType, object serviceInstance, MethodType methodType, Type requestType, Type responseType, MethodInfo methodImpl, GrpcServiceBuilderSettings settings
                 , IEnumerable<IGrpcServerMethodInvokingInterceptor> invokingInterceptors, IEnumerable<IGrpcServerMethodInvokedInterceptor> invokedInterceptors, IEnumerable<IGrpcServerMethodExceptionHandler> exceptionHandlers)
             {
+                m_ServiceName = serviceName;
                 m_ServiceType = serviceType;
                 m_ServiceInstance = serviceInstance;
                 m_MethodImpl = methodImpl;
@@ -108,6 +109,15 @@ namespace mxProject.Helpers.Grpc.Servers
                 m_NeedNotifyPerformanceLog = GetNeedNotifyPerformanceLog(methodImpl);
 
             }
+
+            /// <summary>
+            /// サービス名を取得します。
+            /// </summary>
+            internal string ServiceName
+            {
+                get { return m_ServiceName; }
+            }
+            private string m_ServiceName;
 
             /// <summary>
             /// サービスの型を取得します。
@@ -205,6 +215,7 @@ namespace mxProject.Helpers.Grpc.Servers
             /// <returns>サービス名</returns>
             internal string GetServiceName()
             {
+                if (!string.IsNullOrEmpty(m_ServiceName)) { return m_ServiceName; }
                 return m_ServiceType.Name;
             }
 
@@ -269,207 +280,6 @@ namespace mxProject.Helpers.Grpc.Servers
             Marshaller<TResponse> response = CreateMethodMarshaller<TResponse>(serviceName, methodName, performanceListener, context.Settings);
 
             return new Method<TRequest, TResponse>(context.MethodType, serviceName, methodName, request, response);
-
-        }
-
-        #endregion
-
-        #region メソッド実装の取得
-
-        /// <summary>
-        /// 指定されたメソッドがサービスメソッドである場合、サービスメソッド情報を取得します。
-        /// </summary>
-        /// <param name="methodImpl">メソッド実装</param>
-        /// <param name="methodType">サービスメソッドの種類</param>
-        /// <param name="requestType">リクエストの型</param>
-        /// <param name="responseType">レスポンスの型</param>
-        /// <returns>サービスメソッドである場合、true を返します。</returns>
-        private static bool TryGetServiceMathodInfo(MethodInfo methodImpl, out MethodType methodType, out Type requestType, out Type responseType)
-        {
-
-            if (methodImpl.IsPublic && !methodImpl.IsStatic)
-            {
-
-                if (IsUnaryMathod(methodImpl, out requestType, out responseType))
-                {
-                    methodType = MethodType.Unary;
-                    return true;
-                }
-                else if (IsClientStreamingMathod(methodImpl, out requestType, out responseType))
-                {
-                    methodType = MethodType.ClientStreaming;
-                    return true;
-                }
-                else if (IsServerStreamingMathod(methodImpl, out requestType, out responseType))
-                {
-                    methodType = MethodType.ServerStreaming;
-                    return true;
-                }
-                else if (IsDuplexStreamingMathod(methodImpl, out requestType, out responseType))
-                {
-                    methodType = MethodType.DuplexStreaming;
-                    return true;
-                }
-
-            }
-
-            methodType = default(MethodType);
-            responseType = null;
-            requestType = null;
-
-            return false;
-
-        }
-
-        /// <summary>
-        /// 指定されたメソッドが <see cref="MethodType.Unary"/> と一致するかどうかを取得します。
-        /// </summary>
-        /// <param name="methodImpl">メソッド定義</param>
-        /// <param name="requestType">リクエストの型</param>
-        /// <param name="responseType">レスポンスの型</param>
-        /// <returns>一致する場合、true を返します。</returns>
-        private static bool IsUnaryMathod(MethodInfo methodImpl, out Type requestType, out Type responseType)
-        {
-
-            //Task<PersonSearchResponse> Search(PersonSearchRequest request, ServerCallContext context)
-
-            requestType = null;
-            responseType = null;
-
-            if (!methodImpl.ReturnType.IsGenericType) { return false; }
-            if (methodImpl.ReturnType.GetGenericTypeDefinition() != typeof(Task<>)) { return false; }
-
-            ParameterInfo[] parameters = methodImpl.GetParameters();
-
-            if (parameters.Length != 2) { return false; }
-
-            if (IsRequestStreamType(parameters[0].ParameterType)) { return false; }
-            if (parameters[1].ParameterType != typeof(ServerCallContext)) { return false; }
-
-            requestType = parameters[0].ParameterType;
-            responseType = methodImpl.ReturnType.GetGenericArguments()[0];
-
-            return true;
-
-        }
-
-        /// <summary>
-        /// 指定されたメソッドが <see cref="MethodType.ServerStreaming"/> と一致するかどうかを取得します。
-        /// </summary>
-        /// <param name="methodImpl">メソッド定義</param>
-        /// <param name="requestType">リクエストの型</param>
-        /// <param name="responseType">レスポンスの型</param>
-        /// <returns>一致する場合、true を返します。</returns>
-        private static bool IsServerStreamingMathod(MethodInfo methodImpl, out Type requestType, out Type responseType)
-        {
-
-            //Task BigSearch(PersonSearchRequest request, IServerStreamWriter<PersonSearchResponse> responseStream, ServerCallContext context)
-
-            requestType = null;
-            responseType = null;
-
-            if (methodImpl.ReturnType != typeof(Task)) { return false; }
-
-            ParameterInfo[] parameters = methodImpl.GetParameters();
-
-            if (parameters.Length != 3) { return false; }
-
-            if (IsRequestStreamType(parameters[0].ParameterType)) { return false; }
-            if (!IsResponseStreamType(parameters[1].ParameterType)) { return false; }
-            if (parameters[2].ParameterType != typeof(ServerCallContext)) { return false; }
-
-            requestType = parameters[0].ParameterType;
-            responseType = parameters[1].ParameterType.GetGenericArguments()[0];
-
-            return true;
-
-        }
-
-        /// <summary>
-        /// 指定されたメソッドが <see cref="MethodType.ClientStreaming"/> と一致するかどうかを取得します。
-        /// </summary>
-        /// <param name="methodImpl">メソッド定義</param>
-        /// <param name="requestType">リクエストの型</param>
-        /// <param name="responseType">レスポンスの型</param>
-        /// <returns>一致する場合、true を返します。</returns>
-        private static bool IsClientStreamingMathod(MethodInfo methodImpl, out Type requestType, out Type responseType)
-        {
-
-            //Task<PersonSearchResponse> RepeatSearch(IAsyncStreamReader<PersonSearchRequest> requestStream, ServerCallContext context)
-
-            requestType = null;
-            responseType = null;
-
-            if (!methodImpl.ReturnType.IsGenericType) { return false; }
-            if (methodImpl.ReturnType.GetGenericTypeDefinition() != typeof(Task<>)) { return false; }
-
-            ParameterInfo[] parameters = methodImpl.GetParameters();
-
-            if (parameters.Length != 2) { return false; }
-
-            if (!IsRequestStreamType(parameters[0].ParameterType)) { return false; }
-            if (parameters[1].ParameterType != typeof(ServerCallContext)) { return false; }
-
-            requestType = parameters[0].ParameterType.GetGenericArguments()[0];
-            responseType = methodImpl.ReturnType.GetGenericArguments()[0];
-
-            return true;
-
-        }
-
-        /// <summary>
-        /// 指定されたメソッドが <see cref="MethodType.DuplexStreaming"/> と一致するかどうかを取得します。
-        /// </summary>
-        /// <param name="methodImpl">メソッド定義</param>
-        /// <param name="requestType">リクエストの型</param>
-        /// <param name="responseType">レスポンスの型</param>
-        /// <returns>一致する場合、true を返します。</returns>
-        private static bool IsDuplexStreamingMathod(MethodInfo methodImpl, out Type requestType, out Type responseType)
-        {
-
-            //Task RepeatBigSearch(IAsyncStreamReader<PersonSearchRequest> requestStream, IServerStreamWriter<PersonSearchResponse> responseStream, ServerCallContext context)
-
-            requestType = null;
-            responseType = null;
-
-            if (methodImpl.ReturnType != typeof(Task)) { return false; }
-
-            ParameterInfo[] parameters = methodImpl.GetParameters();
-
-            if (parameters.Length != 3) { return false; }
-
-            if (!IsRequestStreamType(parameters[0].ParameterType)) { return false; }
-            if (!IsResponseStreamType(parameters[1].ParameterType)) { return false; }
-            if (parameters[2].ParameterType != typeof(ServerCallContext)) { return false; }
-
-            requestType = parameters[0].ParameterType.GetGenericArguments()[0];
-            responseType = parameters[1].ParameterType.GetGenericArguments()[0];
-
-            return true;
-
-        }
-
-        /// <summary>
-        /// 指定された型がリクエストストリームかどうかを取得します。
-        /// </summary>
-        /// <param name="t">型</param>
-        /// <returns></returns>
-        private static bool IsRequestStreamType(Type t)
-        {
-
-            return (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IAsyncStreamReader<>));
-
-        }
-
-        /// <summary>
-        /// 指定された型がレスポンスストリームかどうかを取得します。
-        /// </summary>
-        /// <param name="t">型</param>
-        /// <returns></returns>
-        private static bool IsResponseStreamType(Type t)
-        {
-
-            return (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IServerStreamWriter<>));
 
         }
 
@@ -1127,35 +937,6 @@ namespace mxProject.Helpers.Grpc.Servers
         #endregion
 
         #region 汎用処理
-
-        /// <summary>
-        /// 指定された型に実装されているメソッドを取得します。
-        /// </summary>
-        /// <param name="implType"></param>
-        /// <returns></returns>
-        private IDictionary<string, IList<MethodInfo>> GetMethodHandlers(Type implType)
-        {
-
-            Dictionary<string, IList<MethodInfo>> dic = new Dictionary<string, IList<MethodInfo>>();
-
-            foreach (MethodInfo method in implType.GetMethods(BindingFlags.Public | BindingFlags.Instance))
-            {
-
-                IList<MethodInfo> list;
-
-                if (!dic.TryGetValue(method.Name, out list))
-                {
-                    list = new List<MethodInfo>();
-                    dic.Add(method.Name, list);
-                }
-
-                list.Add(method);
-
-            }
-
-            return dic;
-
-        }
 
         /// <summary>
         /// 指定されたコレクションの要素をソートします。

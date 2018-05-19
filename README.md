@@ -50,6 +50,15 @@ RPC メソッド実行時に発生した例外の情報を取得できます。
 
 ストリーム処理に対する汎用的なショートカットメソッドを提供しています。
 
+### ハートビート ###
+
+簡易的なハートビートを実装するための機能を提供しています。
+
+### HTTPゲートウェイ ###
+
+ASP.NET Core 用の HTTP ゲートウェイです。
+Middleware として実装しています。
+
 # 依存関係 #
 
 * .NET Framework 4.6 / .NET Standard 2.0
@@ -64,6 +73,8 @@ RPC メソッド実行時に発生した例外の情報を取得できます。
 * [パフォーマンスと例外の通知](/document/notification.md)
 * [ログ出力](/document/logging.md)
 * [拡張メソッド](/document/extensions.md)
+* [ハートビート](/document/heartbeat.md)
+* [HTTPゲートウェイ](/document/gateway.md)
 
 # ライセンス #
 

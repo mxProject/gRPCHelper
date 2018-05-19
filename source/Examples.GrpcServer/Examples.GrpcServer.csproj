@@ -6,13 +6,19 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Grpc" Version="1.9.0" />
+    <PackageReference Include="Grpc" Version="1.11.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\..\GitHub\mxProject\gRPCHelper\source\mxProject.Helpers.Grpc.Common\mxProject.Helpers.Grpc.Common.csproj" />
     <ProjectReference Include="..\..\..\..\..\GitHub\mxProject\gRPCHelper\source\mxProject.Helpers.Grpc.Server\mxProject.Helpers.Grpc.Server.csproj" />
     <ProjectReference Include="..\Examples.GrpcModels\Examples.GrpcModels.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="SampleServerSettings.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

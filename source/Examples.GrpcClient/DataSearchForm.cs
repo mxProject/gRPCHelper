@@ -12,6 +12,7 @@ using Grpc.Core;
 
 using mxProject.Helpers.Grpc.Commons;
 using mxProject.Helpers.Grpc.Clients;
+using mxProject.Helpers.Grpc.Utilities;
 
 using Examples.GrpcModels;
 using Examples.GrpcClient.DataGridViews;
@@ -44,7 +45,18 @@ namespace Examples.GrpcClient
         private void Initialize()
         {
 
+            m_Settings = SampleClientSettings.LoadFromFile("SampleClientSettings.config");
+
             this.Load += Form_Load;
+            this.FormClosed += Form_FormClosed;
+
+            this.mnuHeartbeat.CheckOnClick = true;
+            this.mnuHeartbeat.Checked = false;
+            this.mnuHeartbeat.CheckedChanged += mnuHeartbeat_CheckedChanged;
+
+            this.mnuHttpGateway.CheckOnClick = true;
+            this.mnuHttpGateway.Checked = false;
+            this.mnuHttpGateway.CheckedChanged += mnuHttpGateway_CheckedChanged;
 
             InitializeDataGrid();
 
@@ -78,6 +90,36 @@ namespace Examples.GrpcClient
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
+        private async void Form_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            await SetHeartbeatEnabledAsync(false);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private async void mnuHeartbeat_CheckedChanged(object sender, EventArgs e)
+        {
+            await SetHeartbeatEnabledAsync(this.mnuHeartbeat.Checked);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void mnuHttpGateway_CheckedChanged(object sender, EventArgs e)
+        {
+            this.UseHttpGateway = this.mnuHttpGateway.Checked;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private async void btnExecute_Click(object sender, EventArgs e)
         {
 
@@ -104,15 +146,15 @@ namespace Examples.GrpcClient
                     }
                     else if (rdoMethodServerStream.Checked)
                     {
-                        await ExecuteServerStreamAsync();
+                        await SearchPlayerServerStreamAsync();
                     }
                     else if (rdoMethodClientStream.Checked)
                     {
-                        await ExecuteClientStreamAsync();
+                        await SearchPlayerClientStreamAsync();
                     }
                     else if (rdoMethodDuplexStream.Checked)
                     {
-                        await ExecuteDuplexStreamAsync();
+                        await SearchPlayerDuplexStreamAsync();
                     }
 
                 }
@@ -144,11 +186,19 @@ namespace Examples.GrpcClient
 
         #endregion
 
+        #region setting
+
+        private SampleClientSettings m_Settings;
+
+        #endregion
+
         #region grpc client
 
         private PlayerSearch.PlayerSearchClient m_Client;
         private Channel m_Channel;
 
+        private GrpcHeartbeat.HeartbeatObject m_HeartbeatContext;
+        
         /// <summary>
         /// 
         /// </summary>
@@ -173,7 +223,7 @@ namespace Examples.GrpcClient
 
                 ChannelCredentials credential = ChannelCredentials.Insecure;
 
-                m_Channel = new Channel("localhost:50000", credential);
+                m_Channel = new Channel(string.Format("{0}:{1}", m_Settings.ServerName, m_Settings.ServerPort), credential);
 
                 GrpcCallInvoker invoker = GrpcCallInvoker.Create(m_Channel, settings);
 
@@ -185,6 +235,8 @@ namespace Examples.GrpcClient
 
                 m_Client = new PlayerSearch.PlayerSearchClient(invoker);
 
+                m_HeartbeatContext = GrpcHeartbeat.CreateClientObject(m_Channel);
+
                 return true;
 
             }
@@ -193,6 +245,111 @@ namespace Examples.GrpcClient
                 MessageBox.Show(ex.Message);
                 return false;
             }
+
+        }
+
+        #endregion
+
+        #region http gateway
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private bool UseHttpGateway
+        {
+            get { return m_UseHttpGateway; }
+            set
+            {
+                if (m_UseHttpGateway == value) { return; }
+                m_UseHttpGateway = value;
+                OnUseHttpGatewayChanged();
+            }
+        }
+        private bool m_UseHttpGateway;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private void OnUseHttpGatewayChanged()
+        {
+
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="methodUrl"></param>
+        /// <param name="request"></param>
+        /// <param name="callOptions"></param>
+        /// <returns></returns>
+        private TResponse CallHttpGateway<TRequest, TResponse>(string methodUrl, TRequest request, CallOptions callOptions)
+        {
+
+            string json = Newtonsoft.Json.JsonConvert.SerializeObject(request, new[] { new Newtonsoft.Json.Converters.StringEnumConverter() });
+
+            byte[] data = System.Text.Encoding.UTF8.GetBytes(json);
+
+            System.Net.WebResponse response = null;
+
+            try
+            {
+
+                string url = m_Settings.HttpGatewayUrl + methodUrl;
+
+                System.Net.WebRequest webRequest = System.Net.HttpWebRequest.Create(url);
+
+                webRequest.Method = "post";
+                webRequest.ContentLength = data.Length;
+                webRequest.ContentType = "application/json";
+
+                foreach (Grpc.Core.Metadata.Entry entry in callOptions.Headers)
+                {
+                    webRequest.Headers.Add("grpc." + entry.Key, entry.Value);
+                }
+
+                webRequest.GetRequestStream().Write(data, 0, data.Length);
+
+                response = webRequest.GetResponse();
+
+                using (System.IO.StreamReader reader = new System.IO.StreamReader(response.GetResponseStream()))
+                {
+                    json = reader.ReadToEnd();
+                    return Newtonsoft.Json.JsonConvert.DeserializeObject<TResponse>(json);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(string.Format("{0}:{1}", ex.GetType().Name, ex.Message));
+                throw;
+            }
+
+        }
+
+        #endregion
+
+        #region heaetbeat
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="enabled"></param>
+        /// <returns></returns>
+        private async Task SetHeartbeatEnabledAsync(bool enabled)
+        {
+
+            if (m_HeartbeatContext == null) { return; }
+
+            if (enabled)
+            {
+                await m_HeartbeatContext.Start(2000, 5000);
+            }
+            else
+            {
+                m_HeartbeatContext.Stop();
+            }
+
+            return;
 
         }
 
@@ -384,9 +541,39 @@ namespace Examples.GrpcClient
 
             TeamSearchRequest request = CreateTeamSearchRequest();
 
-            TeamSearchResponse response = m_Client.SearchTeam(request, CreateCallOptions());
+            CallOptions callOptions = CreateCallOptions();
+
+            TeamSearchResponse response;
+
+            if (this.UseHttpGateway)
+            {
+                response = SearchTeamUseHttp(request, callOptions);
+            }
+            else
+            {
+                response = m_Client.SearchTeam(request, callOptions);
+            }
 
             ShowTeams(response.Teams);
+
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="callOptions"></param>
+        /// <returns></returns>
+        TeamSearchResponse SearchTeamUseHttp(TeamSearchRequest request, CallOptions callOptions)
+        {
+
+            AppendLog("[HttpGateway] PlayerSearch/SearchTeam start");
+
+            TeamSearchResponse response = CallHttpGateway<TeamSearchRequest, TeamSearchResponse>("PlayerSearch/SearchTeam", request, callOptions);
+
+            AppendLog("[HttpGateway] PlayerSearch/SearchTeam complete");
+
+            return response;
 
         }
 
@@ -402,7 +589,18 @@ namespace Examples.GrpcClient
 
             TeamSearchRequest request = CreateTeamSearchRequest();
 
-            TeamSearchResponse response = await m_Client.SearchTeamAsync(request, CreateCallOptions());
+            CallOptions callOptions = CreateCallOptions();
+
+            TeamSearchResponse response;
+
+            if (this.UseHttpGateway)
+            {
+                response = SearchTeamUseHttp(request, callOptions);
+            }
+            else
+            {
+                response = await m_Client.SearchTeamAsync(request, callOptions);
+            }
 
             ShowTeams(response.Teams);
 
@@ -417,17 +615,32 @@ namespace Examples.GrpcClient
         /// <summary>
         /// 
         /// </summary>
-        private async Task ExecuteClientStreamAsync()
+        private async Task SearchPlayerClientStreamAsync()
         {
 
-            using (var call = m_Client.SearchPlayer_ClientStream(CreateCallOptions()))
+            CallOptions callOptions = CreateCallOptions();
+
+            if (this.UseHttpGateway)
             {
 
-                GrpcResult<PlayerSearchResponse> ret = await call.WriteAndCompleteAsync(GetPlayerSearchRequests());
+                PlayerSearchResponse response = SearchPlayerClientStreamUseHttp(GetPlayerSearchRequests(), callOptions);
 
-                if (ret.IsCanceled) { return; }
+                ShowPlayers(response.Players, response.Teams);
 
-                ShowPlayers(ret.Response.Players, ret.Response.Teams);
+            }
+            else
+            {
+
+                using (var call = m_Client.SearchPlayer_ClientStream(callOptions))
+                {
+
+                    GrpcResult<PlayerSearchResponse> ret = await call.WriteAndCompleteAsync(GetPlayerSearchRequestsAsync());
+
+                    if (ret.IsCanceled) { return; }
+
+                    ShowPlayers(ret.Response.Players, ret.Response.Teams);
+
+                }
 
             }
 
@@ -437,7 +650,7 @@ namespace Examples.GrpcClient
         /// 
         /// </summary>
         /// <returns></returns>
-        private IEnumerable<AsyncFunc<PlayerSearchRequest>> GetPlayerSearchRequests()
+        private IEnumerable<AsyncFunc<PlayerSearchRequest>> GetPlayerSearchRequestsAsync()
         {
             return new AsyncFunc<PlayerSearchRequest>[] { GetPlayerSearchRequestAsync1, GetPlayerSearchRequestAsync2 };
         }
@@ -462,37 +675,31 @@ namespace Examples.GrpcClient
             return new PlayerSearchRequest() { ExpectedDataCount = GetExpectedDataCount() };
         }
 
-        #endregion
-
-        #region ServerStream method
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        private IList<PlayerSearchRequest> GetPlayerSearchRequests()
+        {
+            return new PlayerSearchRequest[] { new PlayerSearchRequest() { ExpectedDataCount = GetExpectedDataCount() }, new PlayerSearchRequest() { ExpectedDataCount = GetExpectedDataCount() } };
+        }
 
         /// <summary>
         /// 
         /// </summary>
-        private async Task ExecuteServerStreamAsync()
+        /// <param name="requests"></param>
+        /// <param name="callOptions"></param>
+        /// <returns></returns>
+        private PlayerSearchResponse SearchPlayerClientStreamUseHttp(IEnumerable<PlayerSearchRequest> requests, CallOptions callOptions)
         {
 
-            PlayerSearchRequest request = CreatePlayerSearchRequest();
+            AppendLog("[HttpGateway] PlayerSearch/SearchPlayer_ClientStream start");
 
-            using (var call = m_Client.SearchPlayer_ServerStream(request, CreateCallOptions()))
-            {
+            PlayerSearchResponse response = CallHttpGateway<PlayerSearchRequest[], PlayerSearchResponse>("PlayerSearch/SearchPlayer_ClientStream", requests.ToArray(), callOptions);
 
-                bool firstTime = true;
+            AppendLog("[HttpGateway] PlayerSearch/SearchPlayer_ClientStream complete");
 
-                await call.ForEachAsync(delegate (PlayerSearchResponse response)
-                {
-                    if (firstTime)
-                    {
-                        firstTime = false;
-                        ShowPlayers(response.Players, response.Teams);
-                    }
-                    else
-                    {
-                        AppendPlayers(response.Players, response.Teams);
-                    }
-                });
-
-            }
+            return response;
 
         }
 
@@ -503,30 +710,152 @@ namespace Examples.GrpcClient
         /// <summary>
         /// 
         /// </summary>
-        private async Task ExecuteDuplexStreamAsync()
+        private async Task SearchPlayerServerStreamAsync()
         {
 
             PlayerSearchRequest request = CreatePlayerSearchRequest();
 
-            using (var call = m_Client.SearchPlayer_DuplexStream(CreateCallOptions()))
+            CallOptions callOptions = CreateCallOptions();
+
+            if (this.UseHttpGateway)
             {
 
-                bool firstTime = true;
+                IList<PlayerSearchResponse> responses = SearchPlayerServerStreamUseHttp(request, callOptions);
 
-                await call.WriteAndForEachAsync(GetPlayerSearchRequests(), delegate (PlayerSearchResponse response)
+                for (int i = 0; i < responses.Count; ++i)
                 {
-                    if (firstTime)
+                    if (i == 0)
                     {
-                        firstTime = false;
-                        ShowPlayers(response.Players, response.Teams);
+                        ShowPlayers(responses[i].Players, responses[i].Teams);
                     }
                     else
                     {
-                        AppendPlayers(response.Players, response.Teams);
+                        AppendPlayers(responses[i].Players, responses[i].Teams);
                     }
-                });
+                }
 
             }
+            else
+            {
+
+                using (var call = m_Client.SearchPlayer_ServerStream(request, callOptions))
+                {
+
+                    bool firstTime = true;
+
+                    await call.ForEachAsync(delegate (PlayerSearchResponse response)
+                    {
+                        if (firstTime)
+                        {
+                            firstTime = false;
+                            ShowPlayers(response.Players, response.Teams);
+                        }
+                        else
+                        {
+                            AppendPlayers(response.Players, response.Teams);
+                        }
+                    });
+
+                }
+
+            }
+
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="requests"></param>
+        /// <param name="callOptions"></param>
+        /// <returns></returns>
+        private IList<PlayerSearchResponse> SearchPlayerServerStreamUseHttp(PlayerSearchRequest request, CallOptions callOptions)
+        {
+
+            AppendLog("[HttpGateway] PlayerSearch/SearchPlayer_ServerStream start");
+
+            IList<PlayerSearchResponse> responses = CallHttpGateway<PlayerSearchRequest, PlayerSearchResponse[]>("PlayerSearch/SearchPlayer_ServerStream", request, callOptions);
+
+            AppendLog("[HttpGateway] PlayerSearch/SearchPlayer_ServerStream complete");
+
+            return responses;
+
+        }
+
+        #endregion
+
+        #region DuplexStream method
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private async Task SearchPlayerDuplexStreamAsync()
+        {
+
+            PlayerSearchRequest request = CreatePlayerSearchRequest();
+
+            CallOptions callOptions = CreateCallOptions();
+
+            if (this.UseHttpGateway)
+            {
+
+                IList<PlayerSearchResponse> responses = SearchPlayerDuplexStreamUseHttp(GetPlayerSearchRequests(), callOptions);
+
+                for (int i = 0; i < responses.Count; ++i)
+                {
+                    if (i == 0)
+                    {
+                        ShowPlayers(responses[i].Players, responses[i].Teams);
+                    }
+                    else
+                    {
+                        AppendPlayers(responses[i].Players, responses[i].Teams);
+                    }
+                }
+
+            }
+            else
+            {
+
+                using (var call = m_Client.SearchPlayer_DuplexStream(callOptions))
+                {
+
+                    bool firstTime = true;
+
+                    await call.WriteAndForEachAsync(GetPlayerSearchRequestsAsync(), delegate (PlayerSearchResponse response)
+                    {
+                        if (firstTime)
+                        {
+                            firstTime = false;
+                            ShowPlayers(response.Players, response.Teams);
+                        }
+                        else
+                        {
+                            AppendPlayers(response.Players, response.Teams);
+                        }
+                    });
+
+                }
+
+            }
+
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="requests"></param>
+        /// <param name="callOptions"></param>
+        /// <returns></returns>
+        private IList<PlayerSearchResponse> SearchPlayerDuplexStreamUseHttp(IEnumerable<PlayerSearchRequest> requests, CallOptions callOptions)
+        {
+
+            AppendLog("[HttpGateway] PlayerSearch/SearchPlayer_DuplexStream start");
+
+            IList<PlayerSearchResponse> responses = CallHttpGateway<PlayerSearchRequest[], PlayerSearchResponse[]>("PlayerSearch/SearchPlayer_DuplexStream", requests.ToArray(), callOptions);
+
+            AppendLog("[HttpGateway] PlayerSearch/SearchPlayer_DuplexStream complete");
+
+            return responses;
 
         }
 

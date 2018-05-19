@@ -179,12 +179,12 @@ namespace Examples.GrpcServer
 
             IDictionary<string, Team> teams = SampleDataRepository.GetTeams(10);
 
-            PlayerSearchResponse response = new PlayerSearchResponse();
-
             int initial = 1;
 
             while (await requestStream.MoveNext().ConfigureAwait(false))
             {
+
+                PlayerSearchResponse response = new PlayerSearchResponse();
 
                 if (ExitIfRequestedCancel(context)) { return; }
 

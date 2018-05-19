@@ -4,6 +4,7 @@ using Grpc.Core;
 
 using mxProject.Helpers.Grpc.Commons;
 using mxProject.Helpers.Grpc.Servers;
+using mxProject.Helpers.Grpc.Utilities;
 
 using Examples.GrpcModels;
 
@@ -28,6 +29,8 @@ namespace Examples.GrpcServer
             try
             {
 
+                SampleServerSettings settings = SampleServerSettings.LoadFromFile("SampleServerSettings.config");
+
                 //ServiceTimeFillterAttribute.DefaultOpenTime = null;
                 //ServiceTimeFillterAttribute.DefaultCloseTime = null;
 
@@ -35,25 +38,29 @@ namespace Examples.GrpcServer
 
                 GrpcServiceBuilder builder = new GrpcServiceBuilder();
 
-                GrpcServiceBuilderSettings settings = new GrpcServiceBuilderSettings();
+                GrpcServiceBuilderSettings builderSettings = new GrpcServiceBuilderSettings();
 
-                settings.MarshallerFactory = GrpcMarshallerFactory.DefaultInstance;
+                builderSettings.MarshallerFactory = GrpcMarshallerFactory.DefaultInstance;
 
-                settings.PerformanceListener = new GrpcServerPerformanceListener();
+                builderSettings.PerformanceListener = new GrpcServerPerformanceListener();
 
-                RegistPerformanceEventHandlers(settings.PerformanceListener);
+                RegistPerformanceEventHandlers(builderSettings.PerformanceListener);
 
-                server.Services.Add(builder.BuildService(typeof(PlayerSearch), new PlayerSearchServiceImpl(), settings));
+                server.Services.Add(builder.BuildService("PlayerSearch", typeof(PlayerSearch), new PlayerSearchServiceImpl(), builderSettings));
+
+
+                // regist heartbeat.
+
+                server.Services.Add(GrpcHeartbeat.BuildService());
 
 
                 // start server.
 
                 Grpc.Core.ServerCredentials credential = Grpc.Core.ServerCredentials.Insecure;
 
-                server.Ports.Add("localhost", 50000, credential);
+                server.Ports.Add(settings.ServerName, settings.ServerPort, credential);
 
-
-                Console.WriteLine("Starting...");
+                Console.WriteLine(string.Format("Starting... {0}:{1}", settings.ServerName, settings.ServerPort));
                 server.Start();
                 Console.WriteLine("Started.");
 
