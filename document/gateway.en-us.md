@@ -4,7 +4,7 @@
 
 This library provides GrpcGatewayMiddleware class. This class is middleware for ASP\.NET Core.
 
-![AspNetGateway](/image/AspNetGateway.png "AspNetGateway")
+![AspNetGateway](/document/image/AspNetGateway.png "AspNetGateway")
 
 In the new `ASP.NET Core Web Application` project, Startup class is defined.
 Register the middleware in the application using Startup.Configure method.

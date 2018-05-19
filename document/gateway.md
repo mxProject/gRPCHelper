@@ -4,7 +4,7 @@
 
 このライブラリでは GrpcGatewayMiddleware クラスを提供しています。このクラスは、ASP\.NET Core 用のミドルウェアです。
 
-![AspNetGateway](/image/AspNetGateway.png "AspNetGateway")
+![AspNetGateway](/document/image/AspNetGateway.png "AspNetGateway")
 
 新規「ASP\.NET Core Web アプリケーション」プロジェクトには、Startup クラスが定義されています。
 この Startup クラスの Configure メソッドでアプリケーションにミドルウェアを登録します。
