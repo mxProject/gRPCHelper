@@ -48,6 +48,7 @@ namespace Examples.GrpcClient
             m_Settings = SampleClientSettings.LoadFromFile("SampleClientSettings.config");
 
             this.Load += Form_Load;
+            this.FormClosed += Form_FormClosed;
 
             this.mnuHeartbeat.CheckOnClick = true;
             this.mnuHeartbeat.Checked = false;
@@ -82,6 +83,16 @@ namespace Examples.GrpcClient
 
             txtDataCount.Text = "100";
 
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private async void Form_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            await SetHeartbeatEnabledAsync(false);
         }
 
         /// <summary>
