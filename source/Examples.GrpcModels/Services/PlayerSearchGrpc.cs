@@ -46,6 +46,13 @@ namespace Examples.GrpcModels {
         __Marshaller_PlayerSearchRequest,
         __Marshaller_PlayerSearchResponse);
 
+    static readonly grpc::Method<global::Examples.GrpcModels.PlayerSearchRequest, global::Examples.GrpcModels.PlayerSearchResponse> __Method_PushPlayer = new grpc::Method<global::Examples.GrpcModels.PlayerSearchRequest, global::Examples.GrpcModels.PlayerSearchResponse>(
+        grpc::MethodType.ServerStreaming,
+        __ServiceName,
+        "PushPlayer",
+        __Marshaller_PlayerSearchRequest,
+        __Marshaller_PlayerSearchResponse);
+
     /// <summary>Service descriptor</summary>
     public static global::Google.Protobuf.Reflection.ServiceDescriptor Descriptor
     {
@@ -71,6 +78,11 @@ namespace Examples.GrpcModels {
       }
 
       public virtual global::System.Threading.Tasks.Task SearchPlayer_DuplexStream(grpc::IAsyncStreamReader<global::Examples.GrpcModels.PlayerSearchRequest> requestStream, grpc::IServerStreamWriter<global::Examples.GrpcModels.PlayerSearchResponse> responseStream, grpc::ServerCallContext context)
+      {
+        throw new grpc::RpcException(new grpc::Status(grpc::StatusCode.Unimplemented, ""));
+      }
+
+      public virtual global::System.Threading.Tasks.Task PushPlayer(global::Examples.GrpcModels.PlayerSearchRequest request, grpc::IServerStreamWriter<global::Examples.GrpcModels.PlayerSearchResponse> responseStream, grpc::ServerCallContext context)
       {
         throw new grpc::RpcException(new grpc::Status(grpc::StatusCode.Unimplemented, ""));
       }
@@ -140,6 +152,14 @@ namespace Examples.GrpcModels {
       {
         return CallInvoker.AsyncDuplexStreamingCall(__Method_SearchPlayer_DuplexStream, null, options);
       }
+      public virtual grpc::AsyncServerStreamingCall<global::Examples.GrpcModels.PlayerSearchResponse> PushPlayer(global::Examples.GrpcModels.PlayerSearchRequest request, grpc::Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default(CancellationToken))
+      {
+        return PushPlayer(request, new grpc::CallOptions(headers, deadline, cancellationToken));
+      }
+      public virtual grpc::AsyncServerStreamingCall<global::Examples.GrpcModels.PlayerSearchResponse> PushPlayer(global::Examples.GrpcModels.PlayerSearchRequest request, grpc::CallOptions options)
+      {
+        return CallInvoker.AsyncServerStreamingCall(__Method_PushPlayer, null, options, request);
+      }
       /// <summary>Creates a new instance of client from given <c>ClientBaseConfiguration</c>.</summary>
       protected override PlayerSearchClient NewInstance(ClientBaseConfiguration configuration)
       {
@@ -155,7 +175,8 @@ namespace Examples.GrpcModels {
           .AddMethod(__Method_SearchTeam, serviceImpl.SearchTeam)
           .AddMethod(__Method_SearchPlayer_ServerStream, serviceImpl.SearchPlayer_ServerStream)
           .AddMethod(__Method_SearchPlayer_ClientStream, serviceImpl.SearchPlayer_ClientStream)
-          .AddMethod(__Method_SearchPlayer_DuplexStream, serviceImpl.SearchPlayer_DuplexStream).Build();
+          .AddMethod(__Method_SearchPlayer_DuplexStream, serviceImpl.SearchPlayer_DuplexStream)
+          .AddMethod(__Method_PushPlayer, serviceImpl.PushPlayer).Build();
     }
 
   }
