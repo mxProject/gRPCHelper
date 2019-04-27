@@ -234,6 +234,59 @@ namespace Examples.GrpcServer
 
         #endregion
 
+        #region ServerPush method examle
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="responseStream"></param>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public async override Task PushPlayer(PlayerSearchRequest request, IServerStreamWriter<PlayerSearchResponse> responseStream, ServerCallContext context)
+        {
+
+            string callCounter = GetCallCounter(context);
+
+            s_Logger.Info(string.Format("[{0}] Requested {1} players.", callCounter, request.ExpectedDataCount));
+
+            IDictionary<string, Team> teams = SampleDataRepository.GetTeams(10);
+
+            PlayerSearchResponse response = new PlayerSearchResponse();
+
+            Random r = new Random();
+
+            while (true)
+            {
+
+                await Task.Delay(r.Next(5, 20) * 1000);
+
+                if (ExitIfRequestedCancel(context)) { return; }
+
+                foreach (Player player in SampleDataRepository.GeneratePlayers(1, request.ExpectedDataCount, teams))
+                {
+
+                    response.Players.Add(player);
+
+                    if (!response.Teams.ContainsKey(player.TeamCode))
+                    {
+                        response.Teams.Add(player.TeamCode, teams[player.TeamCode]);
+                    }
+
+                }
+
+                if (response.Players.Count > 0)
+                {
+                    await Task.Delay(s_DelayMilliseconds).ConfigureAwait(false);
+                    await responseStream.WriteAsync(response).ConfigureAwait(false);
+                }
+
+            }
+
+        }
+
+        #endregion
+
         /// <summary>
         /// 
         /// </summary>

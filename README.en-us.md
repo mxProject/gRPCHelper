@@ -1,5 +1,9 @@
 # mxProject.Helpers.Grpc #
 
+This package is obsoleted.
+The reason for developing this package was to implement an interceptor for RPC method invocation. The latest version of Grpc.Core provides interceptor. I thought it would be better to use the official interceptor.
+So I re-developed a lightweight library excluding the interceptor implementation as [mxProject.Helpers.GrpcCommon](https://github.com/mxProject/GrpcCommon).
+
 [Japanese page](README.md)
 
 # Overview #
