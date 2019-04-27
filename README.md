@@ -1,5 +1,10 @@
 # mxProject.Helpers.Grpc #
 
+このライブラリは開発を停止しました。
+私がこのライブラリを開発した理由は、RPCメソッドに対するインターセプターの機能を実現するためでした。
+現在のバージョンの Grpc.Core ではインターセプターが提供されており、その公式のインターセプターを利用するのがよいと判断しました。
+インターセプターの実装を除く軽量のライブラリの [mxProject.Helpers.GrpcCommon](https://github.com/mxProject/GrpcCommon) として再開発しています。
+
 [English page](README.en-us.md)
 
 # 概要 #

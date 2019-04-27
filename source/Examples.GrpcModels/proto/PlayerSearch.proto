@@ -54,5 +54,7 @@ service PlayerSearch {
 	rpc SearchPlayer_ClientStream (stream PlayerSearchRequest) returns (PlayerSearchResponse){}
 
 	rpc SearchPlayer_DuplexStream (stream PlayerSearchRequest) returns (stream PlayerSearchResponse){}
-	
+
+	rpc PushPlayer (PlayerSearchRequest) returns (stream PlayerSearchResponse){}
+
 }

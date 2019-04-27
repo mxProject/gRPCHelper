@@ -47,6 +47,7 @@
             this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuHeartbeat = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuHttpGateway = new System.Windows.Forms.ToolStripMenuItem();
+            this.rdoMethodServerPush = new System.Windows.Forms.RadioButton();
             this.panel1.SuspendLayout();
             this.grpMethods.SuspendLayout();
             this.panel2.SuspendLayout();
@@ -68,12 +69,12 @@
             this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
             this.panel1.Location = new System.Drawing.Point(0, 24);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(488, 153);
+            this.panel1.Size = new System.Drawing.Size(488, 173);
             this.panel1.TabIndex = 0;
             // 
             // btnCancel
             // 
-            this.btnCancel.Location = new System.Drawing.Point(371, 108);
+            this.btnCancel.Location = new System.Drawing.Point(371, 130);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(100, 26);
             this.btnCancel.TabIndex = 14;
@@ -99,7 +100,7 @@
             // 
             // btnExecute
             // 
-            this.btnExecute.Location = new System.Drawing.Point(265, 108);
+            this.btnExecute.Location = new System.Drawing.Point(265, 130);
             this.btnExecute.Name = "btnExecute";
             this.btnExecute.Size = new System.Drawing.Size(100, 26);
             this.btnExecute.TabIndex = 11;
@@ -109,6 +110,7 @@
             // 
             // grpMethods
             // 
+            this.grpMethods.Controls.Add(this.rdoMethodServerPush);
             this.grpMethods.Controls.Add(this.rdoMethodUnary);
             this.grpMethods.Controls.Add(this.rdoMethodDuplexStream);
             this.grpMethods.Controls.Add(this.rdoMethodUnaryAsync);
@@ -116,7 +118,7 @@
             this.grpMethods.Controls.Add(this.rdoMethodClientStream);
             this.grpMethods.Location = new System.Drawing.Point(12, 12);
             this.grpMethods.Name = "grpMethods";
-            this.grpMethods.Size = new System.Drawing.Size(234, 131);
+            this.grpMethods.Size = new System.Drawing.Size(234, 155);
             this.grpMethods.TabIndex = 10;
             this.grpMethods.TabStop = false;
             this.grpMethods.Text = "Methods";
@@ -180,9 +182,9 @@
             // 
             this.panel2.Controls.Add(this.splitContainer1);
             this.panel2.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panel2.Location = new System.Drawing.Point(0, 177);
+            this.panel2.Location = new System.Drawing.Point(0, 197);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(488, 349);
+            this.panel2.Size = new System.Drawing.Size(488, 329);
             this.panel2.TabIndex = 1;
             // 
             // splitContainer1
@@ -201,8 +203,8 @@
             // 
             this.splitContainer1.Panel2.Controls.Add(this.txtLog);
             this.splitContainer1.Panel2.Padding = new System.Windows.Forms.Padding(4);
-            this.splitContainer1.Size = new System.Drawing.Size(488, 349);
-            this.splitContainer1.SplitterDistance = 256;
+            this.splitContainer1.Size = new System.Drawing.Size(488, 329);
+            this.splitContainer1.SplitterDistance = 241;
             this.splitContainer1.TabIndex = 1;
             // 
             // dataGridView1
@@ -212,7 +214,7 @@
             this.dataGridView1.Location = new System.Drawing.Point(4, 4);
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.RowTemplate.Height = 21;
-            this.dataGridView1.Size = new System.Drawing.Size(480, 248);
+            this.dataGridView1.Size = new System.Drawing.Size(480, 233);
             this.dataGridView1.TabIndex = 0;
             // 
             // txtLog
@@ -221,7 +223,7 @@
             this.txtLog.Location = new System.Drawing.Point(4, 4);
             this.txtLog.Name = "txtLog";
             this.txtLog.ReadOnly = true;
-            this.txtLog.Size = new System.Drawing.Size(480, 81);
+            this.txtLog.Size = new System.Drawing.Size(480, 76);
             this.txtLog.TabIndex = 0;
             this.txtLog.Text = "";
             // 
@@ -255,6 +257,17 @@
             this.mnuHttpGateway.Name = "mnuHttpGateway";
             this.mnuHttpGateway.Size = new System.Drawing.Size(167, 22);
             this.mnuHttpGateway.Text = "use Http Gateway";
+            // 
+            // rdoMethodServerPush
+            // 
+            this.rdoMethodServerPush.AutoSize = true;
+            this.rdoMethodServerPush.Location = new System.Drawing.Point(6, 128);
+            this.rdoMethodServerPush.Name = "rdoMethodServerPush";
+            this.rdoMethodServerPush.Size = new System.Drawing.Size(179, 16);
+            this.rdoMethodServerPush.TabIndex = 10;
+            this.rdoMethodServerPush.TabStop = true;
+            this.rdoMethodServerPush.Text = "Push players ( Client Stream )";
+            this.rdoMethodServerPush.UseVisualStyleBackColor = true;
             // 
             // DataSearchForm
             // 
@@ -306,6 +319,7 @@
         private System.Windows.Forms.ToolStripMenuItem optionsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem mnuHeartbeat;
         private System.Windows.Forms.ToolStripMenuItem mnuHttpGateway;
+        private System.Windows.Forms.RadioButton rdoMethodServerPush;
     }
 }
 

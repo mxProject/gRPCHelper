@@ -156,6 +156,10 @@ namespace Examples.GrpcClient
                     {
                         await SearchPlayerDuplexStreamAsync();
                     }
+                    else if (rdoMethodServerPush.Checked)
+                    {
+                        await PushPlayerAsync();
+                    }
 
                 }
 
@@ -166,8 +170,15 @@ namespace Examples.GrpcClient
             }
             finally
             {
-                btnExecute.Enabled = true;
-                btnCancel.Enabled = false;
+                if (rdoMethodServerPush.Checked)
+                {
+                    btnExecute.Enabled = true;
+                }
+                else
+                {
+                    btnExecute.Enabled = true;
+                    btnCancel.Enabled = false;
+                }
             }
 
         }
@@ -858,6 +869,94 @@ namespace Examples.GrpcClient
             return responses;
 
         }
+
+        #endregion
+
+        #region ServerPush method
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private async Task PushPlayerAsync()
+        {
+
+            await Task.Yield();
+
+            if (this.UseHttpGateway) { return; }
+
+            if (m_Observable != null)
+            {
+
+                IObserver<PlayerSearchResponse> observer = GrpcObservable.CreateObserver<PlayerSearchResponse>(
+                    response => System.Diagnostics.Debug.WriteLine(string.Format("IObserver: Received {0} requests.", response.Players.Count))
+                );
+
+                m_Observable.Subscribe(observer);
+
+            }
+            else
+            {
+
+                PlayerSearchRequest request = CreatePlayerSearchRequest();
+
+                CallOptions callOptions = CreateCallOptions();
+
+                Task nowait = Task.Run(async () =>
+                {
+
+                    IDisposable subscriver = null;
+
+                    try
+                    {
+                        using (GrpcServerStreamingObservable<PlayerSearchResponse> observable = m_Client.PushPlayer(request, callOptions).ToObservable())
+                        {
+
+                            m_Observable = observable;
+
+                            IObserver<PlayerSearchResponse> observer = GrpcObservable.CreateObserver<PlayerSearchResponse>(
+                                response => ShowPlayers(response.Players, response.Teams)
+                                , ex => System.Diagnostics.Debug.WriteLine("IObserver:" + ex.Message)
+                                , () => System.Diagnostics.Debug.WriteLine("IObserver: completed")
+                            );
+
+                            subscriver = observable.Subscribe(observer);
+
+                            m_Subscriver = subscriver;
+
+                            await observable.ObserveAsync().ConfigureAwait(false);
+
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine("IObservable: " + ex.Message);
+                    }
+                    finally
+                    {
+                        if (subscriver != null) { subscriver.Dispose(); }
+                    }
+
+                }
+                );
+            }
+
+            //Task wait = Task.Run(async () =>
+            //{
+            //    using (var call = m_Client.PushPlayer(request, callOptions))
+            //    {
+            //        while (await call.ResponseStream.MoveNext().ConfigureAwait(false))
+            //        {
+            //            ShowPlayers(call.ResponseStream.Current.Players, call.ResponseStream.Current.Teams);
+            //            throw new Exception("!");
+            //        }
+            //    }
+            //}
+            //);
+
+        }
+
+        GrpcServerStreamingObservable<PlayerSearchResponse> m_Observable;
+        IDisposable m_Subscriver;
 
         #endregion
 
